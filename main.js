@@ -8,6 +8,12 @@ global.XMLHttpRequest = require( "xmlhttprequest" ).XMLHttpRequest;
 
 require( "dotenv" ).config();
 
+const getDateTime = () => {
+    let now = new Date();
+
+    return `${ now.getDate() }.${ now.getMonth() }.${ now.getFullYear() } в ${ now.getHours() }:${ now.getMinutes() }:${ now.getSeconds() }`;
+}
+
 client.once( "ready", () => {
     client.user.setActivity( "донаты", { type: "LISTENING" } );
 
@@ -27,11 +33,15 @@ client.once( "ready", () => {
 
     centrifuge.on( "connect", ( context ) => {
         let client_id = context.client;
-    
+
         console.log( "Donationalerts приложение подключилось:", client_id );
-    
+
+        const channel = client.channels.cache.get( `${ process.env.channel_id }` );
+
         centrifuge.subscribe( `$alerts:donation_${ process.env.app_id }`, ( message ) => {
             let embed = new MessageEmbed()
+                .setColor( "#EFA30B" )
+                .setTitle( "💰 Новое пожертвование" )
                 .addFields(
                     {
                         name: "Идентификатор пожертвования:",
@@ -43,15 +53,17 @@ client.once( "ready", () => {
                     },
                     {
                         name: "Сообщение:",
-                        value: `${ message.data.message }` || "Отсуствует"
+                        value: `${ message.data.message }` || "_Отсуствует_"
                     },
                     {
                         name: "Сумма:",
                         value: `${ message.data.amount } ${message.data.currency }`
                     }
-                );
-            
-                client.channels.cache.get( `${ process.env.channel_id }` ).send( { embeds: [ embed ] } );
+                )
+                .setFooter( getDateTime() );
+
+                channel.send( `<@!${ process.env.user_id }>` );
+                channel.send( { embeds: [ embed ] } );
         } );
     } );
     
