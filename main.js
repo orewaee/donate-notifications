@@ -15,8 +15,6 @@ const getDateTime = () => {
 }
 
 client.once( "ready", () => {
-    client.user.setActivity( "донаты", { type: "LISTENING" } );
-
     console.log( "Discord бот подключился." );
 
     let centrifuge = new Centrifuge( process.env.url, {
@@ -34,7 +32,7 @@ client.once( "ready", () => {
     centrifuge.on( "connect", ( context ) => {
         let client_id = context.client;
 
-        console.log( "Donationalerts приложение подключилось:", client_id );
+        console.log( "DonationAlerts приложение подключилось:", client_id );
 
         const channel = client.channels.cache.get( `${ process.env.channel_id }` );
 
@@ -43,6 +41,10 @@ client.once( "ready", () => {
                 .setColor( "#EFA30B" )
                 .setTitle( "💰 Новое пожертвование" )
                 .addFields(
+                    {
+                        name: "Способ оплаты:",
+                        value: 'DonationAlerts'
+                    },
                     {
                         name: "Идентификатор пожертвования:",
                         value: `${ message.data.id }`
@@ -68,7 +70,7 @@ client.once( "ready", () => {
     } );
     
     centrifuge.on( "disconnect", ( context ) => {
-        console.log( "Donationalerts приложение отключилось.", context );
+        console.log( "DonationAlerts приложение отключилось.", context );
     } );
 } );
 
