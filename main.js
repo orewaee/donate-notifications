@@ -36,7 +36,11 @@ client.once( "ready", () => {
 
         const channel = client.channels.cache.get( `${ process.env.channel_id }` );
 
+        var prevId;
+
         centrifuge.subscribe( `$alerts:donation_${ process.env.app_id }`, ( message ) => {
+            if ( prevId == message.data.id ) return;
+
             let embed = new MessageEmbed()
                 .setColor( "#EFA30B" )
                 .setTitle( "💰 Новое пожертвование" )
@@ -64,8 +68,10 @@ client.once( "ready", () => {
                 )
                 .setFooter( getDateTime() );
 
-                channel.send( `<@!${ process.env.user_id }>` );
-                channel.send( { embeds: [ embed ] } );
+            channel.send( `<@!${ process.env.user_id }>` );
+            channel.send( { embeds: [ embed ] } );
+
+            prevId = message.data.id;
         } );
     } );
     
