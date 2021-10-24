@@ -1,12 +1,12 @@
-const { Client, Intents, MessageEmbed } = require( "discord.js" );
-const client = new Client( { intents: [ Intents.FLAGS.GUILDS ] } );
+const discord = require( "discord.js" );
+const client = new discord.Client();
 
-const Centrifuge = require( "centrifuge" );
-const ws = require( "ws" );
-
-global.XMLHttpRequest = require( "xmlhttprequest" ).XMLHttpRequest;
+const io = require( "socket.io-client" );
 
 require( "dotenv" ).config();
+
+const donationalerts = io( `${ process.env.url }:${ process.env.port }` );
+donationalerts.emit( "add-user", { token: process.env.donationalerts_token, type: process.env.type } );
 
 const getDateTime = () => {
     let now = new Date();
@@ -14,69 +14,42 @@ const getDateTime = () => {
     return `${ now.getDate() }.${ now.getMonth() }.${ now.getFullYear() } в ${ now.getHours() }:${ now.getMinutes() }:${ now.getSeconds() }`;
 }
 
-client.once( "ready", () => {
+client.on( "ready", () => {
     console.log( "Discord бот подключился." );
 
-    let centrifuge = new Centrifuge( process.env.url, {
-        websocket: ws,
-        subscribeEndpoint: "https://www.donationalerts.com/api/v1/centrifuge/subscribe",
-        subscribeHeaders: {
-            "Authorization": `Bearer ${ process.env.access_token }`
-        }
-    } );
+    const channel = client.channels.cache.get( `${ process.env.channel_id }` );
 
-    centrifuge.setToken( process.env.soket_token );
+    donationalerts.on( "donation", ( donate ) => {
+        donate = JSON.parse( donate );
 
-    centrifuge.connect();
+        let embed = new discord.MessageEmbed()
+            .setColor( "#EFA30B" )
+            .setTitle( `💰 Новое пожертвование` )
+            .addFields(
+                {
+                    name: "Способ оплаты:",
+                    value: 'DonationAlerts'
+                },
+                {
+                    name: "Идентификатор пожертвования:",
+                    value: `${ donate.id }`
+                },
+                {
+                    name: "Пожертвовал:",
+                    value: `${ donate.username }`
+                },
+                {
+                    name: "Сообщение:",
+                    value: `${ donate.message }` || "_Отсуствует_"
+                },
+                {
+                    name: "Сумма:",
+                    value: `${ donate.amount } ${ donate.currency }`
+                }
+            )
+            .setFooter( getDateTime() );
 
-    centrifuge.on( "connect", ( context ) => {
-        let client_id = context.client;
-
-        console.log( "DonationAlerts приложение подключилось:", client_id );
-
-        const channel = client.channels.cache.get( `${ process.env.channel_id }` );
-
-        var prevId;
-
-        centrifuge.subscribe( `$alerts:donation_${ process.env.app_id }`, ( message ) => {
-            if ( prevId == message.data.id ) return;
-
-            let embed = new MessageEmbed()
-                .setColor( "#EFA30B" )
-                .setTitle( "💰 Новое пожертвование" )
-                .addFields(
-                    {
-                        name: "Способ оплаты:",
-                        value: 'DonationAlerts'
-                    },
-                    {
-                        name: "Идентификатор пожертвования:",
-                        value: `${ message.data.id }`
-                    },
-                    {
-                        name: "Пожертвовал:",
-                        value: `${ message.data.username }`
-                    },
-                    {
-                        name: "Сообщение:",
-                        value: `${ message.data.message }` || "_Отсуствует_"
-                    },
-                    {
-                        name: "Сумма:",
-                        value: `${ message.data.amount } ${message.data.currency }`
-                    }
-                )
-                .setFooter( getDateTime() );
-
-            channel.send( `<@!${ process.env.user_id }>` );
-            channel.send( { embeds: [ embed ] } );
-
-            prevId = message.data.id;
-        } );
-    } );
-    
-    centrifuge.on( "disconnect", ( context ) => {
-        console.log( "DonationAlerts приложение отключилось.", context );
+		channel.send( `<@!${ process.env.user_id }>`, embed );
     } );
 } );
 

@@ -1,9 +1,9 @@
 # Donate notifications
-Donation notifications in donationalerts for discord
+Donation notifications in DonationAlerts for Discord
 
-[Node.js](https://nodejs.org/) version - 16.x.x
+[Node.js](https://nodejs.org/) version - 14.x.x
 
-[npm](https://www.npmjs.com/) version - 7.x.x
+[npm](https://www.npmjs.com/) version - 6.x.x
 
 
 ### Installation
@@ -12,13 +12,14 @@ Donation notifications in donationalerts for discord
 - Create and populate a `.env` file
 
 ```
-url=
-access_token=
-soket_token=
-channel_id=
-app_id=
-user_id=
-bot_token=
+url = wss://socket.donationalerts.ru
+port = 443
+type = alert_widget
+donationalerts_token = 
+
+bot_token = 
+channel_id = 
+user_id = 
 ```
 
 - Run the application using the command `node main.js`
